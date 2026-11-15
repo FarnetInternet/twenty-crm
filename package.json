@@ -1,0 +1,102 @@
+{
+  "name": "twenty-crm",
+  "version": "0.1.0",
+  "description": "A Cloudflare-native Twenty CRM runtime using Workers, D1, R2, Queues, Workflows, Durable Objects, KV, Static Assets, Workers AI, and Email Service.",
+  "private": true,
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/rikitrader/twenty-cloudflare-native#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rikitrader/twenty-cloudflare-native.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rikitrader/twenty-cloudflare-native/issues"
+  },
+  "keywords": [
+    "twenty-crm",
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "cloudflare-r2",
+    "cloudflare-queues",
+    "cloudflare-workflows",
+    "durable-objects",
+    "serverless-crm"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "scripts": {
+    "deploy": "npm run patch:twenty && npm run readiness:check && npm run security:production:check && wrangler deploy",
+    "patch:twenty": "node scripts/patch-twenty-bootstrap.mjs && node scripts/patch-twenty-captcha.mjs && node scripts/patch-twenty-password-policy.mjs && node scripts/patch-twenty-cache-fragments.mjs && node scripts/check-twenty-module-graph.mjs",
+    "tail": "wrangler tail",
+    "test": "vitest run",
+    "test:browser:console": "node scripts/check-browser-console.mjs",
+    "test:e2e:ui": "playwright test",
+    "test:a11y": "playwright test e2e/crm-accessibility.spec.ts",
+    "evidence:g3": "node scripts/capture-g3-production-evidence.mjs",
+    "evidence:continuity": "node scripts/capture-production-readiness-evidence.mjs",
+    "audit:mutations": "node scripts/audit-graphql-operations.mjs && node scripts/audit-mutation-durability.mjs",
+    "audit:operations:update": "node scripts/audit-graphql-operations.mjs --write",
+    "smoke:graphql": "node scripts/smoke-graphql-surface.mjs",
+    "test:workflow:e2e": "node scripts/test-crm-workflow-e2e.mjs",
+    "migrate:crm": "node scripts/migrate-crm-ndjson.mjs",
+    "extract:postgres": "node scripts/extract-twenty-postgres.mjs",
+    "reconcile:postgres": "node scripts/reconcile-postgres-export.mjs",
+    "import:reconciled": "node scripts/import-reconciled-bundle.mjs",
+    "upload:reconciled-files": "node scripts/upload-reconciled-files.mjs",
+    "cutover:inputs:check": "node scripts/check-postgres-cutover-inputs.mjs",
+    "migrations:rehearse": "node scripts/rehearse-migrations.mjs",
+    "edge-security:inspect": "node scripts/cloudflare-edge-security.mjs inspect",
+    "edge-security:waf:stage": "node scripts/cloudflare-edge-security.mjs apply-waf-disabled",
+    "edge-security:logpush:stage": "node scripts/cloudflare-edge-security.mjs create-logpush-disabled",
+    "test:webhook-replay:production": "node scripts/test-production-webhook-replay.mjs",
+    "verify:crm-export": "node scripts/verify-crm-export.mjs",
+    "test:jobs:canary": "node scripts/run-job-fault-canary.mjs",
+    "test:dlq:canary": "node scripts/run-dlq-ops-canary.mjs",
+    "test:realtime:canary": "node scripts/run-realtime-canary.mjs",
+    "test:state:canary": "node scripts/run-state-fault-canary.mjs --rotate-token",
+    "test:alerts:canary": "node scripts/run-operations-alert-canary.mjs",
+    "test:g9:staging": "node scripts/run-dlq-ops-canary.mjs --staging --rotate-tokens",
+    "test:g6:staging": "node scripts/run-realtime-canary.mjs --staging --rotate-tokens",
+    "test:g8:staging": "node scripts/run-capacity-canary.mjs",
+    "test:g11:recovery": "node scripts/run-recovery-drill.mjs",
+    "test:g12:rollback": "node scripts/run-rollback-drill.mjs",
+    "test:scheduler:canary": "node scripts/run-scheduler-fault-canary.mjs",
+    "db:migrations:check": "node scripts/check-d1-migrations.mjs",
+    "contract:check": "bash scripts/check-twenty-contract.sh",
+    "contract:runtime:capture": "node scripts/capture-twenty-redis-trace.mjs",
+    "contract:runtime:check": "node scripts/check-runtime-contract.mjs",
+    "contract:graphql:audit": "node scripts/audit-graphql-operations.mjs",
+    "processors:idempotency:check": "node scripts/check-processor-idempotency.mjs",
+    "readiness:check": "node scripts/enterprise-readiness.mjs --require-ready",
+    "observation:production": "node scripts/run-production-observation.mjs",
+    "warm:production": "node scripts/warm-production.mjs",
+    "security:production:check": "node scripts/check-production-security.mjs",
+    "cost:starter:check": "node scripts/check-starter-cost-config.mjs",
+    "cutover:production": "node scripts/run-production-cutover.mjs",
+    "processors:idempotency:capture": "node scripts/check-processor-idempotency.mjs --write",
+    "enterprise:status": "node scripts/enterprise-readiness.mjs",
+    "enterprise:gate": "node scripts/enterprise-readiness.mjs --require-ready",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cron-parser": "^5.10.2",
+    "jose": "^6.2.13",
+    "pg": "^8.23.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@cloudflare/workers-types": "^5.20261103.1",
+    "@playwright/test": "^1.64.1",
+    "es-module-lexer": "^3.0.4",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.154.0"
+  }
+}

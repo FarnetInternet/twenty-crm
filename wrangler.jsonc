@@ -1,0 +1,163 @@
+{
+  "name": "twenty-crm",
+  "account_id": "0dd0d155f8dafdca9d2bade1141986a2",
+  "main": "src/index-native.ts",
+  "compatibility_date": "2026-06-08",
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "crm.mipolitico.com", "custom_domain": true }
+  ],
+  "secrets": {
+    "required": [
+      "INTERNAL_SERVICE_TOKEN",
+      "WEBHOOK_TOKEN",
+      "OUTBOUND_WEBHOOK_SECRET",
+      "INTEGRATION_ENCRYPTION_KEY"
+    ]
+  },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "assets": { "directory": "./frontend", "binding": "ASSETS", "run_worker_first": true },
+  "durable_objects": {
+    "bindings": [
+      { "name": "STATE_DO", "class_name": "TwentyState" },
+      { "name": "SCHEDULER_DO", "class_name": "TwentyScheduler" },
+      { "name": "PUBSUB_DO", "class_name": "TwentyPubSub" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TwentyContainer"] },
+    { "tag": "v2", "new_sqlite_classes": ["TwentyServer", "TwentyWorker"] },
+    { "tag": "v3", "new_sqlite_classes": ["TwentyState"] },
+    { "tag": "v4", "new_sqlite_classes": ["TwentyScheduler"] },
+    { "tag": "v5", "new_sqlite_classes": ["TwentyPubSub"] },
+    { "tag": "v6", "new_sqlite_classes": ["TwentyBackup"] },
+    {
+      // Keep the legacy class migration history intact for accounts that
+      // previously deployed TwentyContainer. The class is no longer bound,
+      // but it is retained to avoid a destructive delete-class migration
+      // when deploying into an account with a different prior history.
+      "tag": "v7"
+    }
+  ],
+  "kv_namespaces": [
+    // Edge status cache — /_status is served without waking the container.
+    { "binding": "STATUS_KV", "id": "c82243c2c99b4c3fa8c83e8f860cd818" }
+  ],
+  "r2_buckets": [
+    // Backup store (backups/ prefix) + Twenty attachments once S3 keys are set.
+    { "binding": "STORAGE", "bucket_name": "twenty-storage","preview_bucket_name": "twenty-storage" }
+  ],
+  "ai": { "binding": "AI" },
+  "d1_databases": [
+    // Platform ops: webhook events + backup ledger (NOT Twenty's CRM data).
+    { "binding": "OPS_DB", "database_name": "twenty-ops", "database_id": "1833e9cc-0876-4996-b75c-42fcd9ba424e", "migrations_dir": "migrations" },
+    { "binding": "CRM_DB", "database_name": "twenty-crm", "database_id": "f366c5c1-0fe6-406f-a1dd-236658c5b91e", "migrations_dir": "migrations" }
+  ],
+  "ratelimits": [
+    {
+      "name": "OPS_RATE_LIMITER",
+      "namespace_id": "2001",
+      "simple": { "limit": 60, "period": 60 }
+    }
+  ],
+  "send_email": [
+    {
+      "name": "OPS_ALERT_EMAIL",
+      "destination_address": "rikitrader@gmail.com",
+      "allowed_sender_addresses": ["twenty-alerts@sismo911.com"]
+    },
+    {
+      "name": "CRM_EMAIL",
+      "allowed_sender_addresses": ["crm@mipolitico.com"]
+    }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "EVENTS_QUEUE", "queue": "twenty-events" },
+      { "binding": "JOBS_QUEUE", "queue": "twenty-jobs" },
+      { "binding": "JOBS_DLQ", "queue": "twenty-jobs-dlq" }
+    ],
+    "consumers": [
+      {
+        "queue": "twenty-events",
+        "max_retries": 3,
+        "dead_letter_queue": "twenty-events-dlq"
+      },
+      {
+        "queue": "twenty-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 1,
+        "max_retries": 10,
+        "max_concurrency": 5,
+        "dead_letter_queue": "twenty-jobs-dlq"
+      },
+      {
+        "queue": "twenty-jobs-dlq",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 10,
+        "max_concurrency": 2
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "binding": "BACKUP_WF",
+      "name": "twenty-backup",
+      "class_name": "BackupWorkflow"
+    },
+    {
+      "binding": "CRM_EXPORT_WF",
+      "name": "twenty-crm-export",
+      "class_name": "CrmExportWorkflow"
+    },
+    {
+      "binding": "CRM_IMPORT_WF",
+      "name": "twenty-crm-import",
+      "class_name": "CrmImportWorkflow"
+    }
+  ],
+  "triggers": {
+    // Cost-controlled production health probe every fifteen minutes + hourly backup.
+    // The probe still validates the server and worker; backups remain hourly.
+    "crons": ["* * * * *", "*/15 * * * *", "0 * * * *"]
+  },
+  "vars": {
+    "D1_NATIVE_MODE": "true",
+    "AUTO_PROVISION_ACCESS_MEMBERS": "true",
+    "AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fast",
+    "SERVER_URL": "https://twenty-crm.observatorio-publico.workers.dev",
+    "REDIS_BACKEND": "cloudflare",
+    "CLOUDFLARE_PUBSUB_TRANSPORT": "poll",
+    "CLOUDFLARE_QUEUE_DRAIN": "true",
+    "ACCESS_REQUIRED": "true",
+    "ACCESS_TEAM_DOMAIN": "https://rikitrader.cloudflareaccess.com",
+    "ACCESS_AUD": "6ccb2a4887272c13bc25d6b8d634b47479622bf4da96cd009a2d65d87092c175",
+    "STORAGE_S3_ENDPOINT": "https://0dd0d155f8dafdca9d2bade1141986a2.r2.cloudflarestorage.com",
+    "STORAGE_S3_NAME": "twenty-storage",
+    "STORAGE_S3_REGION": "auto",
+    "JOB_DLQ_NAME": "twenty-jobs-dlq",
+    "OPS_ALERT_FROM": "twenty-alerts@sismo911.com",
+    "OPS_ALERT_TO": "rikitrader@gmail.com"
+    ,"CRM_EMAIL_FROM": "crm@mipolitico.com",
+    "WEBHOOK_ALLOWED_HOSTS": "twenty-crm.observatorio-publico.workers.dev,crm.mipolitico.com"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "redact_query_string": true,
+    "issues": { "enabled": true },
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+      "persist": true
+    }
+  }
+}

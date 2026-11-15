@@ -1,0 +1,31 @@
+{
+  "gate": "G12",
+  "passed": true,
+  "environment": "isolated-redis-free-canary",
+  "productionTouched": false,
+  "productionVersionBefore": "5de997b6-6095-41d0-a9b2-15a28dacab64",
+  "productionVersionAfter": "5de997b6-6095-41d0-a9b2-15a28dacab64",
+  "startedAt": "2026-07-27T00:03:39.467Z",
+  "decisionAt": "2026-07-27T00:04:40.893Z",
+  "rollbackCompletedAt": "2026-07-27T00:05:15.096Z",
+  "reconciledAt": "2026-07-27T00:05:53.201Z",
+  "rollback": {
+    "from": "latest-worker-version",
+    "to": "previous-worker-version",
+    "mechanism": "wrangler rollback",
+    "statusReportedBackend": "cloudflare",
+    "decisionToCompletionMs": 34203,
+    "targetMs": 900000
+  },
+  "queueReconciliation": {
+    "delayedJobsEnqueued": 25,
+    "delayedBySeconds": 45,
+    "uniqueJobIds": 25,
+    "completedJobs": 25,
+    "missingJobs": 0,
+    "dlqBefore": 1,
+    "dlqAfter": 0,
+    "queueBacklogAfter": 2,
+    "decisionToReconciledMs": 72308
+  }
+}

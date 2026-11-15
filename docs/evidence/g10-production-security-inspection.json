@@ -1,0 +1,91 @@
+{
+  "gate": "G10",
+  "result": "partial",
+  "inspectedAt": "2026-09-18T01:46:32.000Z",
+  "worker": "twenty-crm",
+  "deployedVersion": "b9f7a3c0-5e17-4ac2-8f79-5a8acc8fcc96",
+  "accountId": "0dd0d155f8dafdca9d2bade1141986a2",
+  "hostnames": [
+    "crm.mipolitico.com",
+    "twenty-crm.observatorio-publico.workers.dev"
+  ],
+  "zone": {
+    "name": "mipolitico.com",
+    "id": "a331800c10c2d88ef61b99ab9763f15b",
+    "status": "active",
+    "plan": "Free Website"
+  },
+  "checks": {
+    "bindings": {
+      "result": "passed",
+      "method": "wrangler deploy --dry-run",
+      "observed": [
+        "CRM_DB",
+        "OPS_DB",
+        "STORAGE",
+        "STATUS_KV",
+        "EVENTS_QUEUE",
+        "JOBS_QUEUE",
+        "JOBS_DLQ",
+        "STATE_DO",
+        "SCHEDULER_DO",
+        "PUBSUB_DO",
+        "BACKUP_WF",
+        "CRM_EXPORT_WF",
+        "CRM_IMPORT_WF",
+        "CRM_EMAIL",
+        "OPS_ALERT_EMAIL",
+        "AI",
+        "OPS_RATE_LIMITER",
+        "ASSETS",
+        "CF_VERSION_METADATA"
+      ],
+      "legacyRuntimeBindings": []
+    },
+    "requiredSecrets": {
+      "result": "passed",
+      "namesOnly": [
+        "INTEGRATION_ENCRYPTION_KEY",
+        "INTERNAL_SERVICE_TOKEN",
+        "OUTBOUND_WEBHOOK_SECRET",
+        "WEBHOOK_TOKEN"
+      ],
+      "valuesInspected": false
+    },
+    "observability": {
+      "result": "passed",
+      "workersObservabilityEnabled": true,
+      "persistentInvocationLogs": true,
+      "persistentTraces": true,
+      "traceSamplingRate": 0.1,
+      "queryStringRedaction": true
+    },
+    "waf": {
+      "result": "blocked",
+      "customDomainConfigured": true,
+      "customDomainHealthStatus": 200,
+      "reason": "The zone/custom-domain prerequisite is complete, but the authenticated Wrangler OAuth grant has Zone read only and cannot inspect or change WAF rulesets. The existing signed-in Chrome profile was actively in use during the change window, so no dashboard rule was changed without verifiable UI state."
+    },
+    "logpush": {
+      "result": "blocked",
+      "reason": "No Workers Logpush job was verified. The authenticated deployment grant does not expose Logpush read/write permission, and the Free Website zone entitlement does not establish availability of the workers_trace_events dataset. Persisted Workers logs/traces are enabled but are not claimed as Logpush."
+    },
+    "accountMfaEnforcement": {
+      "result": "failed",
+      "enforceTwoFactor": false
+    }
+  },
+  "requiredActions": [
+    "Using a Cloudflare credential with Zone WAF edit, first deploy CRM-host-only rules in log/disabled mode, validate legitimate authentication/API/webhook traffic, then enforce the tested rules.",
+    "Grant a narrowly scoped Account Logpush read/write credential, confirm workers_trace_events entitlement, configure a customer-owned encrypted destination and retention, and verify delivered events.",
+    "Enable account-wide two-factor enforcement and recapture this evidence."
+  ],
+  "sources": [
+    "wrangler whoami --json",
+    "wrangler secret list --config wrangler.jsonc",
+    "wrangler deploy --dry-run --config wrangler.jsonc",
+    "wrangler deploy --config wrangler.jsonc (version b9f7a3c0-5e17-4ac2-8f79-5a8acc8fcc96)",
+    "production /healthz and /_status responses on both hostnames",
+    "wrangler.jsonc"
+  ]
+}
